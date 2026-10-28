@@ -51,7 +51,7 @@ function copy(t,msg){
   function fb(){var a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy")}catch(e){}a.remove()}
   try{navigator.clipboard.writeText(t).catch(fb)}catch(e){fb()}
   toast(msg||"Copiado")}
-var LOGO='<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 6h30v28l-3.75-3-3.75 3-3.75-3L20 34l-3.75-3-3.75 3-3.75-3L5 34z" fill="#00E676"/><circle cx="14" cy="17" r="2" fill="#06371f"/><circle cx="26" cy="17" r="2" fill="#06371f"/><ellipse cx="20" cy="24" rx="7" ry="4.5" fill="#06371f"/><circle cx="17.5" cy="24" r="1.2" fill="#00E676"/><circle cx="22.5" cy="24" r="1.2" fill="#00E676"/><path d="M8 9l4 4M32 9l-4 4" stroke="#06371f" stroke-width="2.4" stroke-linecap="round"/></svg>';
+var LOGO = '<img src="./img/logo.png" alt="Vaquita" style="width:40px;height:40px;object-fit:contain;vertical-align:middle;">';
 
 function render(){
   var a=document.getElementById("app");
@@ -59,16 +59,56 @@ function render(){
   var s=document.getElementById("sheet");if(s)s.remove();
   if(draft)document.body.insertAdjacentHTML("beforeend",sheet());
 }
+
 function home(){
   var h='<div class="logo">'+LOGO+'Vaquita</div><h1>Dividí gastos sin vueltas</h1><p class="mut">Creá un grupo, cargá lo que pagó cada uno y mirá quién le transfiere a quién.</p>';
   h+='<div class="card"><h2>Nuevo grupo</h2><input id="gn" placeholder="Nombre (ej. Asado del sábado)"><input id="gm" placeholder="Tu apodo"><button class="pri full" onclick="mk()">Crear grupo</button></div>';
-  if(S.groups.length){h+='<h2 style="margin-top:20px">Tus grupos</h2>';S.groups.forEach(function(g){h+='<div class="card row sp" onclick="op(\''+g.id+'\')" style="cursor:pointer"><div class="g1"><b>'+esc(g.name)+'</b><p class="mut">'+g.members.length+' personas, '+g.expenses.length+' gastos</p></div><span class="amt">'+money(total(g))+'</span></div>'})}
-  return h}
-function mk(){
-  var n=document.getElementById("gn").value.trim(),m=document.getElementById("gm").value.trim();
-  if(!n||!m){toast("Falta el nombre del grupo o tu apodo");return}
-  var g={id:uid()+uid(),name:n,created:new Date().toISOString(),members:[{id:"m"+uid(),name:m,alias:""}],expenses:[]};
-  S.groups.unshift(g);save();op(g.id)}
+
+  if(S.groups.length){
+    h+='<h2 style="margin-top:20px">Tus grupos</h2>';
+
+    S.groups.forEach(function(g){
+      h+='<div class="card row sp" style="align-items:center;gap:10px">';
+      h+='<div class="g1" onclick="op(\''+g.id+'\')" style="cursor:pointer;min-width:0">';
+      h+='<b>'+esc(g.name)+'</b>';
+      h+='<p class="mut">'+g.members.length+' personas, '+g.expenses.length+' gastos</p>';
+      h+='</div>';
+      h+='<span class="amt">'+money(total(g))+'</span>';
+      h+='<button class="del" onclick="event.stopPropagation();borrarGrupo(\''+g.id+'\')" title="Eliminar grupo" aria-label="Eliminar grupo">🗑</button>';
+      h+='</div>';
+    });
+  }
+
+  return h;
+}
+
+
+function borrarGrupo(id){
+  var grupo = S.groups.find(function(g){
+    return g.id === id;
+  });
+
+  if(!grupo) return;
+
+  var confirmar = confirm(
+    '¿Seguro que querés eliminar el grupo "'+
+    grupo.name+
+    '"?\n\nSe eliminarán sus integrantes y gastos. Esta acción no se puede deshacer.'
+  );
+
+  if(!confirmar) return;
+
+  S.groups = S.groups.filter(function(g){
+    return g.id !== id;
+  });
+
+  if(typeof save === 'function'){
+    save();
+  }
+
+  render();
+}
+
 function op(id){cur=id;tab="gastos";location.hash=id;render();window.scrollTo(0,0);push()}
 function back(){cur=null;history.replaceState(null,"",location.pathname);render()}
 function group(){
@@ -91,7 +131,7 @@ function saldos(g){
   g.members.forEach(function(m){var v=b[m.id];h+='<div class="card row sp"><span>'+esc(m.name)+'</span><span class="amt '+(v>0?"pos":v<0?"neg":"")+'">'+(v>0?"+":"")+money(v)+'</span></div>'});
   h+='<h2 style="margin-top:22px">Quién le paga a quién</h2>';
   if(!d.length)h+='<div class="card mut">Está todo saldado.</div>';
-  d.forEach(function(x,i){
+  d.forEach(function(x){
     var al=g.members.find(function(m){return m.id===x.to}).alias;
     h+='<div class="card"><div class="row sp"><span><b>'+esc(M(g,x.from))+'</b> le paga a <b>'+esc(M(g,x.to))+'</b></span><span class="amt">'+money(x.amt)+'</span></div>';
     h+=al?'<div class="row" style="margin-top:10px"><button class="pri g1" onclick="copy(\''+esc(al)+'\',\'Alias copiado\')">Copiar alias: '+esc(al)+'</button><a href="https://www.mercadopago.com.ar" target="_blank" rel="noopener"><button>Mercado Pago</button></a></div>':'<p class="mut" style="margin-top:6px">'+esc(M(g,x.to))+' todavía no cargó su alias.</p>';
@@ -144,7 +184,8 @@ function sv(){
     e.items=its;e.amount=its.reduce(function(a,x){return a+x.price},0)}
   else{e.amount=parse(d.amount);if(e.amount<=0){toast("Ingresá un monto válido");return}}
   g.expenses.push(e);save();draft=null;render();toast("Gasto guardado")}
-/* === OCR de tickets (Tesseract.js, corre en el navegador) === */
+
+/* === OCR DE TICKETS: selección independiente de nombres, cantidades y precios === */
 var TJS="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js";
 function loadT(){return new Promise(function(ok,no){if(window.Tesseract)return ok();var s=document.createElement("script");s.src=TJS;s.onload=ok;s.onerror=function(){no(new Error("cdn"))};document.head.appendChild(s)})}
 function prep(file){return new Promise(function(ok,no){
@@ -160,35 +201,89 @@ function prep(file){return new Promise(function(ok,no){
     for(i=0;i<p.length;i+=4){g=Math.max(0,Math.min(255,(p[i]-lo)*k));p[i]=p[i+1]=p[i+2]=g}
     x.putImageData(d,0,0);URL.revokeObjectURL(im.src);ok(c)};
   im.onerror=function(){no(new Error("img"))};im.src=URL.createObjectURL(file)})}
-function num(s){var n=parseFloat(s.replace(/[\s.]/g,"").replace(",","."));return isNaN(n)?0:Math.round(n*100)}
-function parseTicket(t){
-  var items=[],tot=0,re=/(\d{1,3}(?:[. ]\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)\s*$/;
-  t.split("\n").forEach(function(l){
-    l=l.replace(/[$€]/g," ").replace(/\s+/g," ").trim();
-    var m=l.match(re);if(!m)return;var v=num(m[1]);if(v<=0)return;
-    if(/total/i.test(l)&&!/sub/i.test(l)){tot=v;return}
-    if(/subtotal|iva|cuit|fecha|tel[.: ]|factura|ticket|cambio|vuelto|efectivo|tarjeta|propina|descuento|punto de venta|cuota/i.test(l))return;
-    var nm=l.slice(0,m.index).replace(/^\d+([.,]\d+)?\s*(x|u|un)?\s+/i,"").replace(/[^A-Za-zÁÉÍÓÚáéíóúñÑüÜ0-9 .\-\/%]/g," ").replace(/\s+/g," ").trim();
-    if((nm.match(/[A-Za-zÁÉÍÓÚáéíóúñÑ]/g)||[]).length<2)return;
-    items.push({name:nm,price:v})});
-  return{items:items,total:tot}}
-function scanUI(){return '<label class="btnl">📷 Escanear ticket con la cámara<input class="sr" type="file" accept="image/*" onchange="scan(this)"></label><p id="scs" class="mut" style="margin-bottom:8px">'+esc(draft.scan||"")+'</p>'}
+function num(s){
+  s=String(s||"").trim().replace(/\$/g,"").replace(/\s/g,"");
+  if(!s)return 0;
+  if(s.indexOf(",")>-1)s=s.replace(/\./g,"").replace(",",".");
+  else if((s.match(/\./g)||[]).length>1)s=s.replace(/\./g,"");
+  var n=parseFloat(s);return isNaN(n)?0:Math.round(n*100)}
+function scanUI(){return '<label class="btnl">📷 Elegir foto del ticket<input class="sr" type="file" accept="image/*" onchange="scan(this)"></label><p id="scs" class="mut" style="margin-bottom:8px">'+esc(draft.scan||"")+'</p>'}
 function stat(t){if(draft)draft.scan=t;var e=document.getElementById("scs");if(e)e.textContent=t}
-function scan(inp){
-  var f=inp.files[0];inp.value="";if(!f)return;
-  stat("Preparando imagen…");
-  Promise.all([loadT(),prep(f)]).then(function(r){
-    stat("Leyendo ticket… (la primera vez descarga el idioma)");
-    return Tesseract.recognize(r[1],"spa",{logger:function(m){if(m.status==="recognizing text")stat("Leyendo ticket… "+Math.round(m.progress*100)+"%")}})})
-  .then(function(r){
-    var o=parseTicket(r.data.text);
-    if(!o.items.length){stat("No pudimos leer ítems. Probá con más luz y el ticket bien plano, o cargalo a mano.");return}
-    var sum=o.items.reduce(function(a,x){return a+x.price},0);
-    draft.mode="items";
-    draft.items=o.items.map(function(x){return{name:x.name,price:(x.price/100).toFixed(2).replace(".",","),to:[]}});
-    draft.scan=o.total&&o.total!==sum?"Leímos "+o.items.length+" ítems por "+money(sum)+" y el ticket dice "+money(o.total)+". Revisá los precios.":"Leímos "+o.items.length+" ítems. Revisá nombres y precios antes de guardar.";
-    render()})
-  .catch(function(){stat("No se pudo leer la foto. Revisá tu conexión y probá de nuevo.")})}
+function scan(inp){var f=inp.files&&inp.files[0];inp.value="";if(!f)return;showTicketCrop(f)}
+
+function showTicketCrop(file){
+  var flujo={file:file,paso:0,nombres:[],cantidades:[],precios:[],cantidadOmitida:false};
+  seleccionarZonaTicket(flujo);
+}
+function seleccionarZonaTicket(flujo){
+  var old=document.getElementById("ticketCropModal");if(old)old.remove();
+  var pasos=[
+    {titulo:"1 de 3: nombres de productos",ayuda:"Marcá solo la columna o zona donde aparecen los nombres de los productos."},
+    {titulo:"2 de 3: cantidades (opcional)",ayuda:"Marcá la zona de cantidades. Si el ticket no tiene cantidades, tocá «No hay cantidades»."},
+    {titulo:"3 de 3: precios",ayuda:"Marcá la zona donde aparecen los precios. Incluí los importes de los productos y excluí el total del ticket."}
+  ];
+  var paso=pasos[flujo.paso];
+  var modal=document.createElement("div");modal.id="ticketCropModal";
+  modal.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.86);display:flex;align-items:center;justify-content:center;padding:10px;overflow:auto;";
+  modal.innerHTML='<div style="background:white;color:#222;border-radius:14px;padding:15px;width:100%;max-width:760px;max-height:96vh;overflow:auto;box-sizing:border-box">'+
+    '<h2 style="margin:0 0 8px;font-size:20px">'+paso.titulo+'</h2><p style="margin:0 0 12px;font-size:14px">'+paso.ayuda+'</p>'+
+    '<div id="ticketCropWrap" style="position:relative;display:block;width:max-content;max-width:100%;margin:auto;line-height:0;touch-action:none;cursor:crosshair">'+
+    '<img id="ticketCropImage" alt="Ticket para seleccionar" style="display:block;max-width:100%;max-height:58vh;width:auto;height:auto">'+
+    '<div id="ticketCropLayer" style="position:absolute;inset:0;touch-action:none"></div><div id="ticketCropRect" style="display:none;position:absolute;border:2px solid #16a34a;background:rgba(22,163,74,.18);pointer-events:none;box-sizing:border-box"></div></div>'+
+    '<p id="ticketCropHint" style="font-size:13px;color:#555;margin:10px 0">Marcá una zona arrastrando sobre la imagen.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+    (flujo.paso===1?'<button id="ticketCropSkip" type="button" style="padding:10px 12px;border-radius:8px;border:1px solid #ccc;background:white">No hay cantidades</button>':'')+
+    '<button id="ticketCropRetry" type="button" style="padding:10px 12px;border-radius:8px;border:1px solid #ccc;background:white">Volver a marcar</button><button id="ticketCropCancel" type="button" style="padding:10px 12px;border-radius:8px;border:1px solid #ccc;background:white">Cancelar</button><button id="ticketCropNext" type="button" disabled style="padding:10px 14px;border:0;border-radius:8px;background:#15803d;color:white;opacity:.55">'+(flujo.paso===2?'Leer y combinar':'Leer esta zona')+'</button></div></div>';
+  document.body.appendChild(modal);
+  var img=modal.querySelector("#ticketCropImage"),layer=modal.querySelector("#ticketCropLayer"),rect=modal.querySelector("#ticketCropRect"),hint=modal.querySelector("#ticketCropHint"),next=modal.querySelector("#ticketCropNext");
+  var startX=0,startY=0,selection=null,dragging=false,objectUrl=URL.createObjectURL(flujo.file);
+  function close(){if(objectUrl)URL.revokeObjectURL(objectUrl);modal.remove()}
+  function pos(x1,y1,x2,y2){rect.style.display="block";rect.style.left=Math.min(x1,x2)+"px";rect.style.top=Math.min(y1,y2)+"px";rect.style.width=Math.abs(x2-x1)+"px";rect.style.height=Math.abs(y2-y1)+"px"}
+  function point(e){var b=layer.getBoundingClientRect();return{x:Math.max(0,Math.min(b.width,e.clientX-b.left)),y:Math.max(0,Math.min(b.height,e.clientY-b.top))}}
+  function reset(){selection=null;dragging=false;rect.style.display="none";next.disabled=true;next.style.opacity=".55";hint.textContent="Arrastrá sobre la imagen para marcar la zona correcta."}
+  layer.addEventListener("pointerdown",function(e){if(!img.naturalWidth)return;e.preventDefault();var p=point(e);startX=p.x;startY=p.y;dragging=true;selection=null;layer.setPointerCapture(e.pointerId);pos(startX,startY,startX,startY);next.disabled=true;next.style.opacity=".55"});
+  layer.addEventListener("pointermove",function(e){if(!dragging)return;e.preventDefault();var p=point(e);pos(startX,startY,p.x,p.y)});
+  layer.addEventListener("pointerup",function(e){if(!dragging)return;dragging=false;var p=point(e),left=Math.min(startX,p.x),top=Math.min(startY,p.y),width=Math.abs(p.x-startX),height=Math.abs(p.y-startY);if(width<12||height<12){reset();hint.textContent="La zona es muy pequeña. Dibujá un rectángulo más grande.";return}selection={left:left,top:top,width:width,height:height};pos(startX,startY,p.x,p.y);next.disabled=false;next.style.opacity="1";hint.textContent="Zona marcada. Revisá que incluya solo la información de este paso."});
+  img.onload=reset;img.onerror=function(){hint.textContent="No se pudo abrir la imagen. Probá con otra foto."};img.src=objectUrl;
+  modal.querySelector("#ticketCropRetry").onclick=reset;modal.querySelector("#ticketCropCancel").onclick=close;
+  var skip=modal.querySelector("#ticketCropSkip");if(skip)skip.onclick=function(){flujo.cantidades=[];flujo.cantidadOmitida=true;flujo.paso=2;close();seleccionarZonaTicket(flujo)};
+  next.onclick=function(){if(!selection||!img.naturalWidth)return;var b=img.getBoundingClientRect();if(!b.width||!b.height)return;
+    var scaleX=img.naturalWidth/b.width,scaleY=img.naturalHeight/b.height,sx=Math.max(0,Math.round(selection.left*scaleX)),sy=Math.max(0,Math.round(selection.top*scaleY));
+    var sw=Math.max(1,Math.min(Math.round(selection.width*scaleX),img.naturalWidth-sx)),sh=Math.max(1,Math.min(Math.round(selection.height*scaleY),img.naturalHeight-sy));
+    var canvas=document.createElement("canvas");canvas.width=sw;canvas.height=sh;canvas.getContext("2d").drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
+    next.disabled=true;hint.textContent="Leyendo esta zona…";
+    canvas.toBlob(function(blob){if(!blob){hint.textContent="No se pudo recortar la imagen. Probá de nuevo.";next.disabled=false;return}close();stat("Leyendo "+(flujo.paso===0?"nombres":flujo.paso===1?"cantidades":"precios")+" del ticket…");leerZonaTicket(blob).then(function(texto){
+      if(flujo.paso===0)flujo.nombres=extraerNombresTicket(texto);
+      else if(flujo.paso===1)flujo.cantidades=extraerCantidadesTicket(texto);
+      else flujo.precios=extraerPreciosTicket(texto);
+      if(flujo.paso<2){flujo.paso++;seleccionarZonaTicket(flujo)}else finalizarLecturaTicket(flujo);
+    }).catch(function(err){console.error(err);stat("No se pudo leer esta zona. Revisá la conexión y volvé a escanear el ticket.")})},"image/png")
+  };
+}
+function leerZonaTicket(blob){return Promise.all([loadT(),prep(blob)]).then(function(r){return Tesseract.recognize(r[1],"spa",{logger:function(m){if(m.status==="recognizing text")stat("Reconociendo texto… "+Math.round(m.progress*100)+"%")}})}).then(function(r){return r.data.text||""})}
+function limpiarLineaTicket(s){return String(s||"").replace(/[|]/g," ").replace(/\s+/g," ").trim()}
+function extraerNombresTicket(texto){
+  return texto.split(/\r?\n/).map(limpiarLineaTicket).filter(function(l){if(!l)return false;var letras=(l.match(/[A-Za-zÁÉÍÓÚáéíóúñÑüÜ]/g)||[]).length;if(letras<2)return false;if(/total|subtotal|iva\b|cuit|cuil|fecha|hora|factura|ticket|comprobante|efectivo|tarjeta|débito|credito|crédito|vuelto|cambio|descuento|mercado pago|punto de venta|ingresos brutos|responsable inscripto/i.test(l))return false;return true}).map(function(l){return l.replace(/^\s*[0-9]+[.,]?[0-9]*\s*(?:x|u|un|kg)?\s*/i,"").replace(/\s+/g," ").trim()}).filter(Boolean)
+}
+function extraerCantidadesTicket(texto){
+  var out=[];texto.split(/\r?\n/).map(limpiarLineaTicket).forEach(function(l){if(!l)return;var m=l.match(/(?:^|\s)(\d+(?:[.,]\d+)?)\s*(?:x|×|un(?:idad(?:es)?)?|u\b|kg\b|gr\b|g\b|lt\b|l\b|ml\b)\s*(?:$|\s)/i);if(!m)m=l.match(/^\s*(\d+(?:[.,]\d+)?)\s+/);if(m){var q=parseFloat(m[1].replace(",","."));if(isFinite(q)&&q>0&&q<10000)out.push(q)}});return out
+}
+function extraerPreciosTicket(texto){
+  var out=[];var re=/(?:\$\s*)?(\d{1,3}(?:[. ]\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)\s*$/;
+  texto.split(/\r?\n/).map(limpiarLineaTicket).forEach(function(l){if(!l)return;if(/total|subtotal|iva\b|cuit|cuil|fecha|hora|factura|ticket|comprobante|efectivo|tarjeta|débito|credito|crédito|vuelto|cambio|descuento|mercado pago|punto de venta|ingresos brutos|responsable inscripto/i.test(l))return;var m=l.match(re);if(!m)return;var n=num(m[1]);if(n>0)out.push(n)});return out
+}
+function finalizarLecturaTicket(flujo){
+  var nombres=flujo.nombres||[],precios=flujo.precios||[],cantidades=flujo.cantidadOmitida?[]:(flujo.cantidades||[]);
+  if(!nombres.length){stat("No pudimos reconocer nombres de productos. Probá otra foto o cargalos manualmente.");return}
+  if(!precios.length){stat("No pudimos reconocer precios. Volvé a escanear y seleccioná mejor la columna de precios.");return}
+  var n=Math.min(nombres.length,precios.length),items=[];
+  for(var i=0;i<n;i++){var q=cantidades[i]||1;items.push({name:nombres[i],price:precios[i],quantity:q,to:[]})}
+  if(!items.length){stat("No se pudieron combinar nombres y precios. Probá otra foto.");return}
+  draft.mode="items";draft.items=items.map(function(x){return{name:x.name,price:(x.price/100).toFixed(2).replace(".",","),to:[]}});
+  var avisos=[];if(nombres.length!==precios.length)avisos.push("nombres detectados: "+nombres.length+", precios: "+precios.length+"; se combinaron "+n+" por orden");
+  if(!flujo.cantidadOmitida&&cantidades.length&&cantidades.length!==n)avisos.push("cantidades detectadas: "+cantidades.length+"; revisá las cantidades, que por ahora no modifican los importes");
+  draft.scan="Leímos "+n+" ítems"+(avisos.length?". ATENCIÓN: "+avisos.join(". "):". Revisá nombres y precios antes de guardar")+". La cantidad no se multiplica por el precio automáticamente.";
+  render();
+}
 
 function lk(){copy(location.href.split("#")[0]+"#"+cur,"Link copiado")}
 function renderJoin(){document.getElementById("app").innerHTML='<div class="logo">'+LOGO+'Vaquita</div><h1>'+esc(joining.name)+'</h1><p class="mut">Te invitaron a este grupo. ¿Cómo te llamamos?</p><div class="card"><input id="jn" placeholder="Tu nombre o apodo"><button class="pri full" onclick="join()">Entrar al grupo</button></div>'}
@@ -197,8 +292,6 @@ function boot(){
   var id=location.hash.slice(1);
   if(!id||off()){render();return}
   if(S.groups.some(function(g){return g.id===id})){cur=id;render();pull();return}
-  api("groups?id=eq."+encodeURIComponent(id)).then(function(r){
-    if(!r[0]){toast("No encontramos ese grupo");render();return}
-    joining=r[0].data;renderJoin()}).catch(function(){toast("No se pudo abrir el grupo");render()})}
+  api("groups?id=eq."+encodeURIComponent(id)).then(function(r){if(!r[0]){toast("No encontramos ese grupo");render();return}joining=r[0].data;renderJoin()}).catch(function(){toast("No se pudo abrir el grupo");render()})}
 boot();
 setInterval(function(){if(cur&&!draft)pull()},5000);
