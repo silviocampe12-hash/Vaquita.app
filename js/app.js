@@ -82,6 +82,13 @@ function home(){
   return h;
 }
 
+function mk(){
+  var n=document.getElementById("gn").value.trim(),
+      m=document.getElementById("gm").value.trim();
+  if(!n||!m){toast("Poné el nombre del grupo y tu apodo");return}
+  var g={id:uid()+uid(),name:n,members:[{id:"m"+uid(),name:m,alias:""}],expenses:[],del:[]};
+  S.groups.unshift(g);save();op(g.id)
+}
 
 function borrarGrupo(id){
   var grupo = S.groups.find(function(g){
