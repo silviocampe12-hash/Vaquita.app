@@ -898,6 +898,19 @@ function finalizarLecturaTicket(f) {
   render();
 }
 
+/* Restauración de las funciones que necesita el formulario de gastos */
+function scanUI() {
+  return '<p id="scs" class="mut" style="margin-bottom:8px">' +
+    esc(draft.scan || "") +
+    '</p>';
+}
+
+function stat(t) {
+  if (draft) draft.scan = t;
+
+  var e = document.getElementById("scs");
+  if (e) e.textContent = t;
+}
 
 function lk(){copy(location.href.split("#")[0]+"#"+cur,"Link copiado")}
 function renderJoin(){document.getElementById("app").innerHTML='<div class="logo">'+LOGO+'Vaquita</div><h1>'+esc(joining.name)+'</h1><p class="mut">Te invitaron a este grupo. ¿Cómo te llamamos?</p><div class="card"><input id="jn" placeholder="Tu nombre o apodo"><button class="pri full" onclick="join()">Entrar al grupo</button></div>'}
