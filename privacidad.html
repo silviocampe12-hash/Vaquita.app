@@ -18,12 +18,15 @@
 
     <div class="card">
         <h2>1. Información que recopilamos</h2>
-        <p style="margin-top: 8px;">Vaquita funciona principalmente de forma local en tu dispositivo y guarda en el almacenamiento de tu navegador (<code style="background:var(--bg); padding:2px 4px; border-radius:4px;">localStorage</code>) los grupos, integrantes, alias y gastos que ingresás. La sincronización entre usuarios es opcional: Supabase solo se usa si está configurado para compartir y sincronizar los datos del grupo.</p>
+        <p style="margin-top: 8px;">Vaquita guarda en el almacenamiento local de tu navegador los grupos, integrantes, alias y gastos que ingresás. Si compartís un grupo, esos datos se envían a Supabase para que las personas con el enlace puedan consultarlos y actualizarlos. No cargues datos que no quieras compartir con todas las personas que reciban ese enlace.</p>
+        <p style="margin-top: 8px;">El enlace contiene un token aleatorio que da acceso al grupo. Supabase guarda una huella criptográfica de ese token, no el token original. El acceso es de tipo “quien tiene el enlace”: no hay cuentas ni permisos individuales y cualquier persona con el enlace puede ver y editar el grupo. La app también puede guardar el enlace en el almacenamiento local del navegador para mantener la sincronización.</p>
+        <p style="margin-top: 8px;">Los datos remotos se conservan hasta que se elimina el grupo desde Vaquita. La eliminación remota requiere conexión; si falla, la app muestra un error. Borrar los datos del navegador no elimina por sí solo la copia compartida.</p>
     </div>
 
     <div class="card">
-        <h2>2. Publicidad de terceros (Google AdSense)</h2>
-        <p style="margin-top: 8px;">Google AdSense puede mostrar anuncios de terceros en la aplicación. Google y sus socios pueden usar cookies para ofrecer anuncios personalizados según tus visitas a este sitio y a otros. Podés administrar tus preferencias desde la <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener" style="color: var(--pri);">Configuración de anuncios de Google</a> y la configuración de cookies de tu navegador.</p>
+        <h2>2. Proveedores y publicidad</h2>
+        <p style="margin-top: 8px;">Los grupos compartidos se procesan y almacenan en Supabase. El lector de tickets descarga Tesseract.js desde una CDN y procesa la imagen en el navegador; Vaquita no envía la foto del ticket a Supabase.</p>
+        <p style="margin-top: 8px;">Actualmente esta versión no integra Google AdSense. Si se agregan anuncios, esta política deberá actualizarse antes de activarlos para explicar el uso de cookies o identificadores y las opciones de consentimiento aplicables.</p>
     </div>
 
     <div class="card">
@@ -33,7 +36,7 @@
 
     <div class="card">
         <h2>4. Contacto</h2>
-        <p style="margin-top: 8px;">Si tenés consultas sobre privacidad, comunicate con el equipo de Vaquita mediante el canal de contacto del sitio o repositorio desde el que accediste a la aplicación.</p>
+        <p style="margin-top: 8px;">Consultas sobre privacidad: <strong>[COMPLETAR CON UN CORREO DE CONTACTO REAL ANTES DE PUBLICAR]</strong>.</p>
     </div>
 </div>
 </body>

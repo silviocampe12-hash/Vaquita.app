@@ -1,11 +1,34 @@
-/* === CONFIG SUPABASE: pegá acá tus datos (Project Settings > API) === */
-var SB_URL="https://deyeykygcdlaljfxdsqq.supabase.co/rest/v1/",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRleWV5a3lnY2RsYWxqZnhkc3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNzc5ODQsImV4cCI6MjEwODg1Mzk4NH0.Yexh8zVKdwFQ4YEjyD86E28wtuP2BBhUcsph109lPU4";
+/* La clave anon es pública; nunca pegues aquí la clave service_role. */
+var SB_URL="https://deyeykygcdlaljfxdsqq.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRleWV5a3lnY2RsYWxqZnhkc3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNzc5ODQsImV4cCI6MjEwODg1Mzk4NH0.Yexh8zVKdwFQ4YEjyD86E28wtuP2BBhUcsph109lPU4";
+var SB_ANON_KEY=SB_KEY;
 var S={groups:[]},cur=null,tab="gastos",draft=null,toastT=null,joining=null,pushT=null;
 try{S=JSON.parse(localStorage.getItem("vq"))||S}catch(e){}
 function local(){try{localStorage.setItem("vq",JSON.stringify(S))}catch(e){}}
 function save(){local();push()}
-function off(){return SB_URL.indexOf("TU-")>-1}
-function api(path,opt){opt=opt||{};opt.headers={apikey:SB_KEY,Authorization:"Bearer "+SB_KEY,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=representation"};return fetch(SB_URL+"/rest/v1/"+path,opt).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})}
+function off(){return !SB_URL||SB_URL.indexOf("TU-")>-1||!SB_ANON_KEY||SB_ANON_KEY==="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRleWV5a3lnY2RsYWxqZnhkc3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNzc5ODQsImV4cCI6MjEwODg1Mzk4NH0.Yexh8zVKdwFQ4YEjyD86E28wtuP2BBhUcsph109lPU4"||SB_ANON_KEY.indexOf("PEGAR_")===0}
+function secureToken(){
+  if(!window.crypto||!window.crypto.getRandomValues)throw new Error("Este navegador no permite crear enlaces seguros. Abrí Vaquita con HTTPS.");
+  var bytes=new Uint8Array(32);window.crypto.getRandomValues(bytes);
+  var raw="";bytes.forEach(function(b){raw+=String.fromCharCode(b)});
+  return btoa(raw).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")
+}
+function api(action,token,data){
+  var body={action:action,token:token};if(data)body.data=data;
+  return fetch(SB_URL.replace(/\/+$/,"")+"/functions/v1/groups",{
+    method:"POST",
+    headers:{apikey:SB_ANON_KEY,Authorization:"Bearer "+SB_ANON_KEY,"Content-Type":"application/json"},
+    body:JSON.stringify(body)
+  }).then(function(r){
+    return r.text().then(function(text){
+      var result={};try{result=text?JSON.parse(text):{}}catch(e){result={error:text||"Respuesta inválida"}}
+      if(!r.ok)throw new Error(result.error||("HTTP "+r.status));
+      return result
+    })
+  })
+}
+function groupData(g){
+  var data=JSON.parse(JSON.stringify(g));delete data.shareToken;delete data.remote;return data
+}
 function merge(a,b){
   var del=(a.del||[]).concat(b.del||[]),ms={},es={};
   b.members.concat(a.members).forEach(function(m){ms[m.id]=m});
@@ -14,17 +37,20 @@ function merge(a,b){
   a.expenses=Object.keys(es).filter(function(k){return del.indexOf(k)<0}).map(function(k){return es[k]}).sort(function(x,y){return x.id<y.id?-1:1});
   a.del=del.filter(function(v,i){return del.indexOf(v)===i});return a}
 function pull(){
-  var g=G();if(!g||off())return Promise.resolve();
-  return api("groups?id=eq."+g.id).then(function(r){
-    if(!r[0])return;var before=JSON.stringify(g);merge(g,r[0].data);
+  var g=G();if(!g||off()||!g.shareToken)return Promise.resolve();
+  return api("load",g.shareToken).then(function(r){
+    if(!r.data)return;var before=JSON.stringify(g);merge(g,r.data);g.remote=true;
     if(JSON.stringify(g)!==before){local();if(!draft&&!/INPUT|SELECT/.test(document.activeElement.tagName))render()}
-  }).catch(function(){})}
+  })}
 function push(){
-
-  if(off())return;clearTimeout(pushT);
-  pushT=setTimeout(function(){var g=G();if(!g)return;
-    pull().then(function(){return api("groups?on_conflict=id",{method:"POST",body:JSON.stringify({id:g.id,data:g,updated_at:new Date().toISOString()})})})
-    .catch(function(){toast("Sin conexión: no se sincronizó")})},400)}
+  if(off())return;var g=G();if(!g)return;
+  try{if(!g.shareToken)g.shareToken=secureToken()}catch(e){console.error(e);toast(e.message);return}
+  clearTimeout(pushT);
+  pushT=setTimeout(function(){
+    pull().then(function(){return api("save",g.shareToken,groupData(g))})
+      .then(function(){g.remote=true;local()})
+      .catch(function(e){console.error("No se pudo sincronizar el grupo con Supabase:",e);toast("No se pudo sincronizar: "+e.message)})
+  },400)}
 function uid(){return Math.random().toString(36).slice(2,7)}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function money(c){var n=c/100;return"$"+n.toLocaleString("es-AR",{minimumFractionDigits:c%100?2:0,maximumFractionDigits:2})}
@@ -88,7 +114,9 @@ function mk(){
   var n=document.getElementById("gn").value.trim(),
       m=document.getElementById("gm").value.trim();
   if(!n||!m){toast("Poné el nombre del grupo y tu apodo");return}
-  var g={id:uid()+uid(),name:n,members:[{id:"m"+uid(),name:m,alias:""}],expenses:[],del:[]};
+  var g;
+  try{g={id:uid()+uid(),shareToken:secureToken(),name:n,members:[{id:"m"+uid(),name:m,alias:""}],expenses:[],del:[]}}
+  catch(e){console.error(e);toast(e.message);return}
   S.groups.unshift(g);save();op(g.id)
 }
 
@@ -107,18 +135,26 @@ function borrarGrupo(id){
 
   if(!confirmar) return;
 
-  S.groups = S.groups.filter(function(g){
-    return g.id !== id;
-  });
-
-  if(typeof save === 'function'){
-    save();
+  function removeLocal(){
+    S.groups=S.groups.filter(function(g){return g.id!==id});
+    local();render()
   }
-
-  render();
+  if(grupo.remote&&off()){
+    toast("Configurá Supabase para revocar el enlace y borrar la copia remota");return
+  }
+  if(!off()&&grupo.shareToken){
+    api("delete",grupo.shareToken).then(removeLocal).catch(function(e){
+      console.error("No se pudo borrar el grupo de Supabase:",e);
+      toast("No se pudo borrar el grupo compartido: "+e.message)
+    })
+  }else removeLocal()
 }
 
-function op(id){cur=id;tab="gastos";location.hash=id;render();window.scrollTo(0,0);push()}
+function op(id){
+  var g=S.groups.find(function(x){return x.id===id});
+  try{if(g&&!g.shareToken)g.shareToken=secureToken()}catch(e){console.error(e);toast(e.message);return}
+  cur=id;tab="gastos";if(g)location.hash=g.shareToken;render();window.scrollTo(0,0);push()
+}
 function back(){cur=null;history.replaceState(null,"",location.pathname);render()}
 function group(){
   var g=G();
@@ -143,7 +179,7 @@ function saldos(g){
   d.forEach(function(x){
     var al=g.members.find(function(m){return m.id===x.to}).alias;
     h+='<div class="card"><div class="row sp"><span><b>'+esc(M(g,x.from))+'</b> le paga a <b>'+esc(M(g,x.to))+'</b></span><span class="amt">'+money(x.amt)+'</span></div>';
-    h+=al?'<div class="row" style="margin-top:10px"><button class="pri g1" onclick="copy(\''+esc(al)+'\',\'Alias copiado\')">Copiar alias: '+esc(al)+'</button><a href="https://www.mercadopago.com.ar" target="_blank" rel="noopener"><button>Mercado Pago</button></a></div>':'<p class="mut" style="margin-top:6px">'+esc(M(g,x.to))+' todavía no cargó su alias.</p>';
+    h+=al?'<div class="row" style="margin-top:10px"><button class="pri g1" data-alias="'+esc(al)+'" onclick="copy(this.dataset.alias,\'Alias copiado\')">Copiar alias: '+esc(al)+'</button><a href="https://www.mercadopago.com.ar" target="_blank" rel="noopener"><button>Mercado Pago</button></a></div>':'<p class="mut" style="margin-top:6px">'+esc(M(g,x.to))+' todavía no cargó su alias.</p>';
     h+='</div>'});
   if(g.expenses.length)h+='<button class="pri full" style="margin-top:14px" onclick="wa()">Copiar resumen para WhatsApp</button>';
   return h}
@@ -450,13 +486,33 @@ function finalizarLecturaTicket(f){
   render()}
 
 
-function lk(){copy(location.href.split("#")[0]+"#"+cur,"Link copiado")}
+function lk(){
+  var g=G();if(!g)return;
+  if(off()){toast("Supabase todavía no está configurado; no se puede compartir el grupo");return}
+  try{if(!g.shareToken)g.shareToken=secureToken()}catch(e){console.error(e);toast(e.message);return}
+  clearTimeout(pushT);
+  pull().then(function(){return api("save",g.shareToken,groupData(g))})
+    .then(function(){g.remote=true;local();copy(location.href.split("#")[0]+"#"+g.shareToken,"Link copiado")})
+    .catch(function(e){console.error("No se pudo preparar el enlace compartido:",e);toast("No se pudo guardar el grupo: "+e.message)})
+}
 function renderJoin(){document.getElementById("app").innerHTML='<div class="logo">'+LOGO+'Vaquita</div><h1>'+esc(joining.name)+'</h1><p class="mut">Te invitaron a este grupo. ¿Cómo te llamamos?</p><div class="card"><input id="jn" placeholder="Tu nombre o apodo"><button class="pri full" onclick="join()">Entrar al grupo</button></div>'}
 function join(){var n=document.getElementById("jn").value.trim();if(!n)return;var g=joining;g.members.push({id:"m"+uid(),name:n,alias:""});S.groups.unshift(g);cur=g.id;save();render()}
 function boot(){
-  var id=location.hash.slice(1);
-  if(!id||off()){render();return}
-  if(S.groups.some(function(g){return g.id===id})){cur=id;render();pull();return}
-  api("groups?id=eq."+encodeURIComponent(id)).then(function(r){if(!r[0]){toast("No encontramos ese grupo");render();return}joining=r[0].data;renderJoin()}).catch(function(){toast("No se pudo abrir el grupo");render()})}
+  var token=location.hash.slice(1);
+  if(!token){render();return}
+  var existing=S.groups.find(function(g){return g.shareToken===token});
+  if(!existing){
+    existing=S.groups.find(function(g){return g.id===token&&!g.shareToken});
+    if(existing){
+      try{existing.shareToken=secureToken()}catch(e){console.error(e);toast(e.message);render();return}
+      location.hash=existing.shareToken;cur=existing.id;render();push();return
+    }
+  }
+  if(existing){cur=existing.id;render();pull().catch(function(e){console.error("No se pudo actualizar el grupo:",e);toast("No se pudo sincronizar: "+e.message)});return}
+  if(off()){render();toast("Supabase no está configurado para abrir enlaces compartidos");return}
+  api("load",token).then(function(r){
+    if(!r.data){toast("No encontramos ese grupo o el enlace fue revocado");render();return}
+    joining=r.data;joining.shareToken=token;joining.remote=true;renderJoin()
+  }).catch(function(e){console.error("No se pudo abrir el grupo compartido:",e);toast("No se pudo abrir el grupo: "+e.message);render()})}
 boot();
-setInterval(function(){if(cur&&!draft)pull()},5000);
+setInterval(function(){if(cur&&!draft)pull().catch(function(e){console.error("No se pudo actualizar el grupo:",e)})},5000);

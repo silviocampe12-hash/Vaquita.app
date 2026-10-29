@@ -1,0 +1,2 @@
+[functions.groups]
+verify_jwt = false
