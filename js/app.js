@@ -20,6 +20,7 @@ function pull(){
     if(JSON.stringify(g)!==before){local();if(!draft&&!/INPUT|SELECT/.test(document.activeElement.tagName))render()}
   }).catch(function(){})}
 function push(){
+
   if(off())return;clearTimeout(pushT);
   pushT=setTimeout(function(){var g=G();if(!g)return;
     pull().then(function(){return api("groups?on_conflict=id",{method:"POST",body:JSON.stringify({id:g.id,data:g,updated_at:new Date().toISOString()})})})
