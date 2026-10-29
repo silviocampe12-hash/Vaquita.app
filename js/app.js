@@ -1,5 +1,5 @@
 /* === CONFIG SUPABASE: pegá acá tus datos (Project Settings > API) === */
-var SB_URL="https://TU-PROYECTO.supabase.co",SB_KEY="TU_ANON_KEY";
+var SB_URL="https://deyeykygcdlaljfxdsqq.supabase.co/rest/v1/",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRleWV5a3lnY2RsYWxqZnhkc3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNzc5ODQsImV4cCI6MjEwODg1Mzk4NH0.Yexh8zVKdwFQ4YEjyD86E28wtuP2BBhUcsph109lPU4";
 var S={groups:[]},cur=null,tab="gastos",draft=null,toastT=null,joining=null,pushT=null;
 try{S=JSON.parse(localStorage.getItem("vq"))||S}catch(e){}
 function local(){try{localStorage.setItem("vq",JSON.stringify(S))}catch(e){}}
@@ -79,6 +79,7 @@ function home(){
     });
   }
 
+  h+='<footer class="mut" style="text-align:center;margin-top:24px"><a class="mut" href="privacidad.html">Privacidad</a> · <a class="mut" href="terminos.html">Términos</a></footer>';
   return h;
 }
 
@@ -239,7 +240,19 @@ function num(s){
   var n=parseFloat(s);return isNaN(n)?0:Math.round(n*100)}
 
 /* ---------- Interfaz: cámara + foto ---------- */
-function scanUI(){return '<div class="row" style="margin-bottom:6px"><button type="button" class="g1" onclick="abrirCamara()">📷 Escanear</button><label class="btnl g1" style="margin:0">🖼 Elegir foto<input class="sr" type="file" accept="image/*" onchange="scan(this)"></label></div><p id="scs" class="mut" style="margin-bottom:8px">'+esc(draft.scan||"")+'</p>'}
+
+/* ---------- Interfaz: cámara + foto ---------- */
+function scanUI(){
+    return '<div class="row" style="margin-bottom:6px">' +
+        '<button type="button" class="g1" onclick="abrirCamara()">' +
+        '<img src="./img/camara-de-fotos.png" alt="" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;margin-right:6px;">' +
+        'Escanear</button>' +
+        '<label class="btnl g1" style="margin:0">' +
+        '<img src="./img/subir.png" alt="" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;margin-right:6px;">' +
+        'Elegir foto<input class="sr" type="file" accept="image/*" onchange="scan(this)"></label>' +
+        '</div><p id="scs" class="mut" style="margin-bottom:8px">' +
+        esc(draft.scan||"") + '</p>';
+}
 function stat(t){if(draft)draft.scan=t;var e=document.getElementById("scs");if(e)e.textContent=t}
 function scan(inp){var f=inp.files&&inp.files[0];inp.value="";if(!f)return;showTicketCrop(f)}
 
