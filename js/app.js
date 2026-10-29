@@ -5,7 +5,15 @@ var S={groups:[]},cur=null,tab="gastos",draft=null,toastT=null,joining=null,push
 try{S=JSON.parse(localStorage.getItem("vq"))||S}catch(e){}
 function local(){try{localStorage.setItem("vq",JSON.stringify(S))}catch(e){}}
 function save(){local();push()}
-function off(){return !SB_URL||SB_URL.indexOf("TU-")>-1||!SB_ANON_KEY||SB_ANON_KEY==="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRleWV5a3lnY2RsYWxqZnhkc3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNzc5ODQsImV4cCI6MjEwODg1Mzk4NH0.Yexh8zVKdwFQ4YEjyD86E28wtuP2BBhUcsph109lPU4"||SB_ANON_KEY.indexOf("PEGAR_")===0}
+function off() {
+  return (
+    !SB_URL ||
+    SB_URL.includes("TU-") ||
+    !SB_ANON_KEY ||
+    SB_ANON_KEY === "******" ||
+    SB_ANON_KEY.startsWith("PEGAR_")
+  );
+}
 function secureToken(){
   if(!window.crypto||!window.crypto.getRandomValues)throw new Error("Este navegador no permite crear enlaces seguros. Abrí Vaquita con HTTPS.");
   var bytes=new Uint8Array(32);window.crypto.getRandomValues(bytes);
