@@ -15,7 +15,7 @@ function off() {
   );
 }
 function secureToken(){
-  if(!window.crypto||!window.crypto.getRandomValues)throw new Error("Este navegador no permite crear enlaces seguros. Abrí Vaquita con HTTPS.");
+  if(!window.crypto||!window.crypto.getRandomValues)throw new Error("Este navegador no permite crear enlaces seguros. Abrí Yuntiva con HTTPS.");
   var bytes=new Uint8Array(32);window.crypto.getRandomValues(bytes);
   var raw="";bytes.forEach(function(b){raw+=String.fromCharCode(b)});
   return btoa(raw).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")
@@ -86,7 +86,7 @@ function copy(t,msg){
   function fb(){var a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy")}catch(e){}a.remove()}
   try{navigator.clipboard.writeText(t).catch(fb)}catch(e){fb()}
   toast(msg||"Copiado")}
-var LOGO = '<img src="./img/logo.png" alt="Vaquita" style="width:40px;height:40px;object-fit:contain;vertical-align:middle;">';
+var LOGO = '<img src="./img/logo.png" alt="Yuntiva" style="width:40px;height:40px;object-fit:contain;vertical-align:middle;">';
 
 function render(){
   var a=document.getElementById("app");
@@ -96,7 +96,7 @@ function render(){
 }
 
 function home(){
-  var h='<div class="logo">'+LOGO+'Vaquita</div><h1>Dividí gastos sin vueltas</h1><p class="mut">Creá un grupo, cargá lo que pagó cada uno y mirá quién le transfiere a quién.</p>';
+  var h='<div class="logo">'+LOGO+'Yuntiva</div><h1>Dividí gastos sin vueltas</h1><p class="mut">Creá un grupo, cargá lo que pagó cada uno y mirá quién le transfiere a quién.</p>';
   h+='<div class="card"><h2>Nuevo grupo</h2><input id="gn" placeholder="Nombre (ej. Asado del sábado)"><input id="gm" placeholder="Tu apodo"><button class="pri full" onclick="mk()">Crear grupo</button></div>';
 
   if(S.groups.length){
@@ -135,27 +135,66 @@ function borrarGrupo(id){
 
   if(!grupo) return;
 
-  var confirmar = confirm(
-    '¿Seguro que querés eliminar el grupo "'+
-    grupo.name+
-    '"?\n\nSe eliminarán sus integrantes y gastos. Esta acción no se puede deshacer.'
-  );
+  var fondo = document.createElement("div");
+  fondo.className = "confirm-overlay";
 
-  if(!confirmar) return;
+  var cartel = document.createElement("div");
+  cartel.className = "confirm-box";
 
-  function removeLocal(){
-    S.groups=S.groups.filter(function(g){return g.id!==id});
-    local();render()
+  cartel.innerHTML =
+    '<div class="confirm-icon">🗑</div>' +
+    '<h2>Eliminar grupo</h2>' +
+    '<p class="confirm-question">¿Querés eliminar este grupo?</p>' +
+    '<p class="confirm-name"></p>' +
+    '<p class="confirm-warning">Se eliminarán sus integrantes y gastos. Esta acción no se puede deshacer.</p>' +
+    '<div class="confirm-actions">' +
+      '<button type="button" class="confirm-cancel">Cancelar</button>' +
+      '<button type="button" class="confirm-delete">Eliminar grupo</button>' +
+    '</div>';
+
+  cartel.querySelector(".confirm-name").textContent = grupo.name;
+
+  fondo.appendChild(cartel);
+  document.body.appendChild(fondo);
+
+  function cerrar(){
+    fondo.remove();
   }
-  if(grupo.remote&&off()){
-    toast("Configurá Supabase para revocar el enlace y borrar la copia remota");return
-  }
-  if(!off()&&grupo.shareToken){
-    api("delete",grupo.shareToken).then(removeLocal).catch(function(e){
-      console.error("No se pudo borrar el grupo de Supabase:",e);
-      toast("No se pudo borrar el grupo compartido: "+e.message)
-    })
-  }else removeLocal()
+
+  cartel.querySelector(".confirm-cancel").onclick = cerrar;
+
+  fondo.addEventListener("click", function(e){
+    if(e.target === fondo) cerrar();
+  });
+
+  cartel.querySelector(".confirm-delete").onclick = function(){
+    cerrar();
+
+    function removeLocal(){
+      S.groups = S.groups.filter(function(g){
+        return g.id !== id;
+      });
+      local();
+      render();
+      toast("Grupo eliminado");
+    }
+
+    if(grupo.remote && off()){
+      toast("Configurá Supabase para revocar el enlace y borrar la copia remota");
+      return;
+    }
+
+    if(!off() && grupo.shareToken){
+      api("delete", grupo.shareToken)
+        .then(removeLocal)
+        .catch(function(e){
+          console.error("No se pudo borrar el grupo de Supabase:", e);
+          toast("No se pudo borrar el grupo compartido: " + e.message);
+        });
+    } else {
+      removeLocal();
+    }
+  };
 }
 
 function op(id){
@@ -192,7 +231,7 @@ function saldos(g){
   if(g.expenses.length)h+='<button class="pri full" style="margin-top:14px" onclick="wa()">Copiar resumen para WhatsApp</button>';
   return h}
 function wa(){
-  var g=G(),d=debts(balances(g)),t="Resumen de Vaquita: ["+g.name+"]\nTotal gastado: "+money(total(g))+"\n\nSaldos finales:\n";
+  var g=G(),d=debts(balances(g)),t="Resumen de Yuntiva: ["+g.name+"]\nTotal gastado: "+money(total(g))+"\n\nSaldos finales:\n";
   if(!d.length)t+="• Todo saldado\n";
   d.forEach(function(x){var al=g.members.find(function(m){return m.id===x.to}).alias;t+="• "+M(g,x.from)+" le debe a "+M(g,x.to)+": "+money(x.amt)+(al?" (Alias: "+al+")":"")+"\n"});
   copy(t.trim(),"Resumen copiado")}
@@ -503,7 +542,7 @@ function lk(){
     .then(function(){g.remote=true;local();copy(location.href.split("#")[0]+"#"+g.shareToken,"Link copiado")})
     .catch(function(e){console.error("No se pudo preparar el enlace compartido:",e);toast("No se pudo guardar el grupo: "+e.message)})
 }
-function renderJoin(){document.getElementById("app").innerHTML='<div class="logo">'+LOGO+'Vaquita</div><h1>'+esc(joining.name)+'</h1><p class="mut">Te invitaron a este grupo. ¿Cómo te llamamos?</p><div class="card"><input id="jn" placeholder="Tu nombre o apodo"><button class="pri full" onclick="join()">Entrar al grupo</button></div>'}
+function renderJoin(){document.getElementById("app").innerHTML='<div class="logo">'+LOGO+'Yuntiva</div><h1>'+esc(joining.name)+'</h1><p class="mut">Te invitaron a este grupo. ¿Cómo te llamamos?</p><div class="card"><input id="jn" placeholder="Tu nombre o apodo"><button class="pri full" onclick="join()">Entrar al grupo</button></div>'}
 function join(){var n=document.getElementById("jn").value.trim();if(!n)return;var g=joining;g.members.push({id:"m"+uid(),name:n,alias:""});S.groups.unshift(g);cur=g.id;save();render()}
 function boot(){
   var token=location.hash.slice(1);

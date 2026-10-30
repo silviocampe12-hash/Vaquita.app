@@ -97,7 +97,7 @@ async function tokenHash(token: string) {
 }
 
 function tableUrl(query: string) {
-  return `${supabaseUrl}/rest/v1/vaquita_groups${query}`;
+  return `${supabaseUrl}/rest/v1/yuntiva_groups${query}`;
 }
 
 async function databaseRequest(path: string, init: RequestInit = {}) {

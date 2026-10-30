@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
 
 /* =========================================
-   VAQUITA — ESTILOS GENERALES
+   YUNTIVA — ESTILOS GENERALES
    ========================================= */
 
 
@@ -384,4 +384,111 @@ button {
     width: 1px;
     height: 1px;
     overflow: hidden;
+}
+
+/* CARTEL PERSONALIZADO PARA ELIMINAR GRUPOS */
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: rgba(10, 25, 40, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(3px);
+}
+
+.confirm-box {
+  width: 100%;
+  max-width: 360px;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #12314A;
+  border-radius: 20px;
+  padding: 26px 22px 20px;
+  text-align: center;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25);
+  animation: confirmAppear 0.18s ease-out;
+}
+
+.confirm-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fff0ed;
+  font-size: 25px;
+}
+
+.confirm-box h2 {
+  margin: 0 0 12px;
+  color: #12314A;
+  font-size: 22px;
+}
+
+.confirm-question {
+  margin: 0 0 7px;
+  color: #526575;
+  font-size: 15px;
+}
+
+.confirm-name {
+  margin: 0 0 14px;
+  color: #12314A;
+  font-size: 18px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.confirm-warning {
+  margin: 0 0 22px;
+  color: #788795;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-actions button {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 8px;
+  border: 0;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirm-cancel {
+  background: #edf3f7;
+  color: #12314A;
+}
+
+.confirm-delete {
+  background: #c94242;
+  color: white;
+}
+
+.confirm-actions button:active {
+  transform: scale(0.97);
+}
+
+@keyframes confirmAppear {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

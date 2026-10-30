@@ -1,6 +1,6 @@
-# Vaquita.app
+# Yuntiva
 
-Vaquita.app es una aplicación web para crear grupos de gastos compartidos, registrar movimientos, calcular saldos y compartir un grupo con otras personas mediante un enlace privado.
+Yuntiva es una aplicación web para crear grupos de gastos compartidos, registrar movimientos, calcular saldos y compartir un grupo con otras personas mediante un enlace privado.
 
 El proyecto actual está orientado a un flujo de uso muy simple: el usuario crea un grupo en el navegador, agrega miembros, registra gastos y obtiene automáticamente un resumen de quién debe a quién. La sincronización con Supabase es opcional y se activa cuando el grupo tiene un enlace compartido.
 
@@ -88,7 +88,7 @@ La aplicación no procesa pagos ni integra transferencias reales; solo calcula s
 - [js/app.js](js/app.js): lógica principal de la app: estado local, grupos, gastos, balances, enlace compartido, OCR, cámara, lectura de tickets, sincronización y UI.
 - [supabase/config.toml](supabase/config.toml): configuración del proyecto local para la CLI de Supabase.
 - [supabase/functions/groups/index.ts](supabase/functions/groups/index.ts): Edge Function que toma la acción del navegador, valida el token y opera sobre la tabla privada.
-- [supabase/migrations/20261029000000_private_link_groups.sql](supabase/migrations/20261029000000_private_link_groups.sql): crea la tabla `public.vaquita_groups`, activa RLS y revoca permisos de los roles públicos.
+- [supabase/migrations/20261029000000_private_link_groups.sql](supabase/migrations/20261029000000_private_link_groups.sql) y [supabase/migrations/20261030000000_rename_groups_to_yuntiva.sql](supabase/migrations/20261030000000_rename_groups_to_yuntiva.sql): crean y renombran la tabla compartida como `public.yuntiva_groups`, con RLS y permisos restringidos a `service_role`.
 - [img](img): activos visuales de la app: logo, iconos, botones de cámara y de subida.
 
 > Nota: hay un archivo extraño en la raíz llamado `main[200~Delta` con tamaño 0 y sin función aparente. No forma parte de la lógica de la app ni de la documentación funcional; no se le asigna comportamiento ni se recomienda usarlo.
@@ -183,14 +183,15 @@ supabase functions deploy groups
 
 ## Migraciones y esquema
 
-La migración principal es:
+Las migraciones de grupos compartidos son:
 
 - [supabase/migrations/20261029000000_private_link_groups.sql](supabase/migrations/20261029000000_private_link_groups.sql)
+- [supabase/migrations/20261030000000_rename_groups_to_yuntiva.sql](supabase/migrations/20261030000000_rename_groups_to_yuntiva.sql)
 
-Crea la tabla:
+La tabla utilizada es:
 
 ```sql
-public.vaquita_groups
+public.yuntiva_groups
 ```
 
 con estas columnas:
@@ -335,8 +336,8 @@ No hay envío de fotos a Supabase ni almacenamiento por parte del servidor. La p
 
 La app cuenta con una configuración de PWA en [manifest.json](manifest.json):
 
-- nombre: `Vaquita.app`
-- short_name: `Vaquita`
+- nombre: `Yuntiva`
+- short_name: `Yuntiva`
 - start_url: `/`
 - scope: `/`
 - display: `standalone`
@@ -510,7 +511,7 @@ El código actual es:
 
 - revisá que la Edge Function esté desplegada con `supabase functions deploy groups`
 - revisá que el proyecto de Supabase coincida con el `project-ref`
-- confirmá que la tabla `public.vaquita_groups` exista
+- confirmá que la tabla `public.yuntiva_groups` exista
 - revisá que la función tenga acceso a `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`
 
 ### La cámara no funciona
@@ -533,14 +534,14 @@ El código actual es:
 
 ## Conclusión
 
-Vaquita.app es una aplicación funcional y de propósito claro para dividir gastos compartidos. Su arquitectura actual es simple, local-first y orientada a grupos pequeños con enlaces privados. La documentación de este proyecto debe mantener un enfoque honesto: hay funciones implementadas y útiles, pero también existen limitaciones importantes de seguridad, abuso y escalabilidad que conviene resolver antes de abrir la app públicamente a usuarios reales.
+Yuntiva es una aplicación funcional y de propósito claro para dividir gastos compartidos. Su arquitectura actual es simple, local-first y orientada a grupos pequeños con enlaces privados. La documentación de este proyecto debe mantener un enfoque honesto: hay funciones implementadas y útiles, pero también existen limitaciones importantes de seguridad, abuso y escalabilidad que conviene resolver antes de abrir la app públicamente a usuarios reales.
 
 ## Verificación de acceso para Supabase
 
 Durante la auditoría del código, se comprobó que:
 
 - el proyecto ref real es `deyeykygcdlaljfxdsqq`
-- la tabla usada es `public.vaquita_groups`
+- la tabla usada es `public.yuntiva_groups`
 - el hash del token se almacena en `token_hash`
 - la función usa `service_role` solo en el entorno del servidor
 - `anon` no tiene acceso directo a la tabla
