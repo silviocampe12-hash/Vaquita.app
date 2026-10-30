@@ -1,5 +1,5 @@
 /* La clave anon es pública; nunca pegues aquí la clave service_role. */
-var SB_URL="https://deyeykygcdlaljfxdsqq.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRleWV5a3lnY2RsYWxqZnhkc3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNzc5ODQsImV4cCI6MjEwODg1Mzk4NH0.Yexh8zVKdwFQ4YEjyD86E28wtuP2BBhUcsph109lPU4";
+var SB_URL="https://iktaiszcpbhhgtbxlsbs.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdGFpc3pjcGJoaGd0Ynhsc2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzNjA4NDksImV4cCI6MjEwODkzNjg0OX0.aAOmVyGd_MmmAWK7NRHXK1tz-LF03KY0CNgWuMtbsYw";
 var SB_ANON_KEY=SB_KEY;
 var S={groups:[]},cur=null,tab="gastos",draft=null,toastT=null,joining=null,pushT=null;
 try{S=JSON.parse(localStorage.getItem("vq"))||S}catch(e){}

@@ -137,7 +137,7 @@ La versión actual de la app usa Supabase para sincronizar grupos privados por e
 
 En [js/app.js](js/app.js) se configuran estas variables:
 
-- `SB_URL`: URL del proyecto de Supabase, por ejemplo `https://deyeykygcdlaljfxdsqq.supabase.co`
+- `SB_URL`: URL del proyecto de Supabase, por ejemplo `https://iktaiszcpbhhgtbxlsbs.supabase.co` (sin `/rest/v1/`)
 - `SB_KEY`: clave pública `anon` del proyecto
 
 Estas son variables del cliente y deben ser visibles en el navegador. Su seguridad depende de que la tabla privada no tenga permisos directos para `anon` o `authenticated`.
@@ -162,10 +162,10 @@ supabase login
 - inicia sesión en la CLI de Supabase. Se usa antes de vincular el proyecto local con el proyecto remoto.
 
 ```bash
-supabase link --project-ref deyeykygcdlaljfxdsqq
+supabase link --project-ref iktaiszcpbhhgtbxlsbs
 ```
 
-- vincula este repositorio con el proyecto de Supabase exacto. El valor `deyeykygcdlaljfxdsqq` coincide con el proyecto real configurado en [supabase/.temp/linked-project.json](supabase/.temp/linked-project.json).
+- vincula este repositorio con el proyecto de Supabase `iktaiszcpbhhgtbxlsbs`.
 
 ```bash
 supabase db push
@@ -178,6 +178,8 @@ supabase functions deploy groups
 ```
 
 - publica la Edge Function `groups` en Supabase. Debe ejecutarse después de configurar el proyecto y la base de datos.
+
+El frontend ya apunta al proyecto `iktaiszcpbhhgtbxlsbs`, pero la verificación del endpoint devolvió `404` porque `groups` todavía no está desplegada allí. Ejecutá los comandos anteriores en orden para activar la sincronización.
 
 > Antes de aplicar migraciones que alteren permisos, columnas o acciones de escritura, conviene hacer un backup y verificar los cambios en un entorno controlado.
 
@@ -540,7 +542,8 @@ Yuntiva es una aplicación funcional y de propósito claro para dividir gastos c
 
 Durante la auditoría del código, se comprobó que:
 
-- el proyecto ref real es `deyeykygcdlaljfxdsqq`
+- el frontend apunta al proyecto `iktaiszcpbhhgtbxlsbs`
+- la Edge Function `groups` aún debe desplegarse en ese proyecto
 - la tabla usada es `public.yuntiva_groups`
 - el hash del token se almacena en `token_hash`
 - la función usa `service_role` solo en el entorno del servidor
