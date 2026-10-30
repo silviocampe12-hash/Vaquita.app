@@ -1,22 +1,30 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <!-- Icono de la aplicación -->
-<link rel="icon" type="image/png" sizes="32x32" href="imgfavicon.png">
-<link rel="apple-touch-icon" sizes="180x180" href="imgapple-touch-icon.png">
-
-<!-- Icono PWA -->
-<link rel="icon" type="image/png" sizes="192x192" href="imgicon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="imgicon-512.png">
-<link rel="manifest" href="manifest.json">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Vaquita</title>
-<link rel="stylesheet" href="css/style.css">
-
-</head>
-<body>
-<div id="app"></div>
-<script src="js/app.js"></script>
-</body>
-</html>
+{
+  "name": "Vaquita.app",
+  "short_name": "Vaquita",
+  "description": "Compartí gastos de manera sencilla.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#74ACDF",
+  "theme_color": "#74ACDF",
+  "icons": [
+    {
+      "src": "img/imgicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "img/imgicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "img/imgicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
